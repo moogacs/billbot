@@ -44,6 +44,15 @@ func MonthBounds(now time.Time) (start, end time.Time) {
 	return start, start.AddDate(0, 1, 0)
 }
 
+// WeekBounds returns the half-open interval [start, end) for the ISO-style calendar week
+// of now in now's location: Monday 00:00 through the following Monday 00:00.
+func WeekBounds(now time.Time) (start, end time.Time) {
+	loc := now.Location()
+	daysSinceMonday := (int(now.Weekday()) + 6) % 7 // Monday=0 .. Sunday=6
+	start = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).AddDate(0, 0, -daysSinceMonday)
+	return start, start.AddDate(0, 0, 7)
+}
+
 // answerInWindow reports whether a completion timestamp falls in [start, end).
 // Answers with missing or unparseable timestamps are excluded.
 func answerInWindow(a model.AnswerReport, start, end time.Time) bool {

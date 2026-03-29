@@ -28,17 +28,19 @@ func main() {
 }
 
 var (
-	flagPricing      string
-	flagFormat       string
-	flagProvider     string
-	flagAgents       bool
-	flagLatestOnly   bool
-	flagShowPrompts  bool
-	flagPromptWidth  int
-	flagColor        string
-	flagNoColor      bool
-	flagDaily        bool
-	flagMonthly      bool
+	flagPricing           string
+	flagFormat            string
+	flagProvider          string
+	flagAgents            bool
+	flagLatestOnly        bool
+	flagShowPrompts       bool
+	flagPromptWidth       int
+	flagColor             string
+	flagNoColor           bool
+	flagDaily             bool
+	flagMonthly           bool
+	flagWeeklyLimitUSD    float64
+	flagWeeklyLimitTokens int64
 )
 
 func rootCmd() *cobra.Command {
@@ -98,7 +100,25 @@ Use --daily or --monthly to count only API completions whose timestamps fall in 
 		RunE:  runProject,
 	}
 
-	root.AddCommand(analyzeCmd, projectCmd)
+	forecastCmd := &cobra.Command{
+		Use:   "forecast [path]",
+		Short: "Project when a weekly USD or token cap is reached (hourly pace)",
+		Long: `Uses the same log discovery as analyze: optional path to a session file or project dir, otherwise all default sessions for the selected provider(s).
+
+The week is the local calendar week Monday 00:00 → next Monday 00:00. Pace is total usage since week start divided by elapsed hours (minimum 1h). Set exactly one of --weekly-limit-usd or --weekly-limit-tokens.`,
+		Args: cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			p := "."
+			if len(args) > 0 {
+				p = args[0]
+			}
+			return runForecast(p)
+		},
+	}
+	forecastCmd.Flags().Float64Var(&flagWeeklyLimitUSD, "weekly-limit-usd", 0, "weekly spend cap in USD (priced like analyze)")
+	forecastCmd.Flags().Int64Var(&flagWeeklyLimitTokens, "weekly-limit-tokens", 0, "weekly token cap (sum of input+output+cache fields)")
+
+	root.AddCommand(analyzeCmd, projectCmd, forecastCmd)
 	return root
 }
 
@@ -157,6 +177,127 @@ func runAnalyzePath(path string) error {
 
 func runProject(cmd *cobra.Command, args []string) error {
 	return runAnalyzePath(args[0])
+}
+
+func runForecast(path string) error {
+	if flagWeeklyLimitUSD > 0 && flagWeeklyLimitTokens > 0 {
+		return fmt.Errorf("use only one of --weekly-limit-usd and --weekly-limit-tokens")
+	}
+	var metric analyze.ForecastMetric
+	var limit float64
+	switch {
+	case flagWeeklyLimitUSD > 0:
+		metric = analyze.ForecastUSD
+		limit = flagWeeklyLimitUSD
+	case flagWeeklyLimitTokens > 0:
+		metric = analyze.ForecastTokens
+		limit = float64(flagWeeklyLimitTokens)
+	default:
+		return fmt.Errorf("set --weekly-limit-usd or --weekly-limit-tokens")
+	}
+
+	pt, err := pricing.Load(flagPricing)
+	if err != nil {
+		return err
+	}
+	pn, err := provider.ParseProviderFlag(flagProvider)
+	if err != nil {
+		return err
+	}
+
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+	st, err := os.Stat(abs)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+	var answers []model.AnswerReport
+
+	if st.IsDir() && !flagLatestOnly {
+		answers, err = collectAnswersAggregate(pn, pt, flagAgents)
+		if err != nil {
+			return err
+		}
+	} else {
+		sessionPath := abs
+		if st.IsDir() {
+			var v model.Vendor
+			var usedFallback bool
+			sessionPath, v, usedFallback, err = provider.ResolveDirToSession(pn, abs, flagAgents)
+			if err != nil {
+				return err
+			}
+			if usedFallback && (pn == provider.Auto || pn == provider.Anthropic) {
+				if pn == provider.Anthropic && v == model.VendorAnthropic {
+					fmt.Fprintf(os.Stderr, "billbot: no session for project %s; using latest Claude Code log: %s\n", abs, sessionPath)
+				} else if pn == provider.Auto {
+					fmt.Fprintf(os.Stderr, "billbot: no Claude session for project %s; using latest %s log: %s\n", abs, provider.VendorLabel(v), sessionPath)
+				}
+			}
+			pn = provider.ProviderName(v)
+		}
+		vendor, events, err := provider.ReadSession(pn, sessionPath)
+		if err != nil {
+			return err
+		}
+		rep := analyze.BuildReport(sessionPath, vendor, events, pt)
+		answers = rep.Answers
+	}
+
+	f := analyze.ForecastWeeklyLimit(answers, now, limit, metric)
+	return emitForecast(f)
+}
+
+func collectAnswersAggregate(pn provider.Name, pt *pricing.Table, agents bool) ([]model.AnswerReport, error) {
+	var out []model.AnswerReport
+	appendFrom := func(paths []string, v model.Vendor, read func(string) ([]model.NormalizedEvent, error)) {
+		for _, p := range paths {
+			ev, err := read(p)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "billbot: skip %s: %v\n", p, err)
+				continue
+			}
+			rep := analyze.BuildReport(p, v, ev, pt)
+			out = append(out, rep.Answers...)
+		}
+	}
+	switch pn {
+	case provider.Auto:
+		appendFrom(anthropic.AllAnthropicSessionPaths(agents), model.VendorAnthropic, anthropic.ReadEvents)
+		appendFrom(codex.CollectSessionJSONLPaths(), model.VendorOpenAI, codex.ReadEvents)
+		appendFrom(cursor.CollectWorkspaceStateDBs(), model.VendorCursor, cursorReadSQLite)
+	case provider.Anthropic:
+		appendFrom(anthropic.AllAnthropicSessionPaths(agents), model.VendorAnthropic, anthropic.ReadEvents)
+	case provider.OpenAI:
+		appendFrom(codex.CollectSessionJSONLPaths(), model.VendorOpenAI, codex.ReadEvents)
+	case provider.CursorProv:
+		appendFrom(cursor.CollectWorkspaceStateDBs(), model.VendorCursor, cursorReadSQLite)
+	default:
+		return nil, fmt.Errorf("unknown provider %q", pn)
+	}
+	if len(out) == 0 {
+		return nil, fmt.Errorf("no session files found for provider %q (try --latest-only or a different --provider)", pn)
+	}
+	return out, nil
+}
+
+func emitForecast(f analyze.WeeklyForecast) error {
+	loc := f.Now.Location()
+	switch flagFormat {
+	case "json":
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(f.ReportRFC3339(loc))
+	case "table":
+		output.PrintForecast(os.Stdout, f, displayOptions())
+		return nil
+	default:
+		return fmt.Errorf("unknown format %q", flagFormat)
+	}
 }
 
 const (

@@ -1,4 +1,4 @@
-**Billbot** is cost calculator for **Claude Code**, **OpenAI Codex**, and **Cursor**. a small command-line tool that reads session files from your computer and prints **rough dollar estimates** for API-style token usage. Nothing is uploaded: it only opens local JSONL logs and Cursor’s SQLite stores, multiplies tokens by rates in a YAML file (built-in or yours), and shows tables or JSON.
+**Billbot** is a cost calculator for **Claude Code**, **OpenAI Codex**, and **Cursor**  a small command-line tool that reads session files from your computer and prints **rough dollar estimates** for API-style token usage. Nothing is uploaded: it only opens local JSONL logs and Cursor’s SQLite stores, multiplies tokens by rates in a YAML file (built-in or yours), and shows tables or JSON.
 
 Use it when you want a quick sense of spend after a long agent session, or a roll-up across everything the tool can find on disk not when you need an exact invoice.
 
@@ -15,6 +15,7 @@ Use it when you want a quick sense of spend after a long agent session, or a rol
 - **Stays local** — no network calls, no API keys for analysis.
 - **Three sources** — Anthropic (Claude Code) JSONL, Codex JSONL, Cursor `state.vscdb` / `store.db` (and Cursor JSONL).
 - **Two ways to run it** — either “everything I can see” (default when you pass a directory), or “this one session” (a path to a file, or a directory with `--latest-only`).
+- **Weekly cap forecaster** — `billbot forecast` projects when you might hit a USD or token budget from average hourly pace in the current local week (Monday–Monday); same log discovery as analyze.
 - **Easy to script** — `--format json` for stable output.
 - **Your pricing file** — optional `--pricing-file` when models or rates change.
 
@@ -37,6 +38,8 @@ go build -o billbot ./cmd/billbot
 ## How to run it
 
 `billbot`, `billbot analyze`, and `billbot project` all boil down to “analyze this path.” If you omit the path, it uses the current directory (`.`).
+
+**`billbot forecast`** uses the same path rules and provider scans, but instead of listing spend it estimates **when** a weekly cap might be reached. You set exactly one of `--weekly-limit-usd` or `--weekly-limit-tokens`. The week is your **local** Monday 00:00 through the following Monday; pace is usage so far divided by elapsed time (with a minimum one-hour denominator). Lines without parseable timestamps are ignored. Output is a rough hint, not a guarantee.
 
 **1. Pass a directory, without `--latest-only` (the usual default)**  
 billbot does **not** walk your repo. It looks in the normal places each tool stores logs (see below), groups results by **Anthropic / OpenAI / Cursor**, lists each session with subtotals, then prints **grand totals**. If a vendor has no files, that section is skipped. Broken files are mentioned on **stderr** and skipped.
@@ -78,12 +81,22 @@ Point at a `.jsonl` or Cursor DB path. With `--provider auto`, the path is used 
 | `--no-color` | Same as `--color never`. |
 | `--include-agents` | Include Claude `agent-*.jsonl` when scanning Claude paths. |
 
+**`forecast` only**
+
+| Flag | What it does |
+|------|----------------|
+| `--weekly-limit-usd` | Weekly spend cap in USD (priced like analyze). |
+| `--weekly-limit-tokens` | Weekly token cap (sum of input, output, and cache fields in the logs). |
+
+Use **one** of these, not both.
+
 Colors apply only to **`--format table`**, not JSON.
 
 ## JSON shape (for scripts)
 
 - **One session:** `meta`, `turns[]` (each with `answers[]`), and a flat `answers[]`.
 - **Full aggregate:** `providers[]` (each with `sessions[]`, `totals`, …), `grand_totals`, and `meta.disclaimer`. Session rows can include `first_prompt` when present.
+- **Forecast:** `week_start`, `week_end`, `now`, `metric` (`usd` or `tokens`), `used`, `limit`, `remaining`, `elapsed_hours`, `hourly_rate`, optional `hit_at`, `hits_before_week_end`, `already_exceeded`, optional `no_forecast_reason`.
 
 ## Pricing quirks
 
@@ -111,6 +124,14 @@ For **Anthropic**, short model ids also get a **prefix fallback** (e.g. `claude-
 
 # Pipe-friendly
 ./billbot analyze session.jsonl --format json
+
+# When might a $20/week budget be hit? (all discoverable sessions, all providers)
+./billbot forecast --weekly-limit-usd 20
+
+# Cursor only, token budget
+./billbot forecast --provider cursor --weekly-limit-tokens 500000
+
+./billbot forecast --weekly-limit-usd 15 --format json
 ```
 
 ## Custom pricing

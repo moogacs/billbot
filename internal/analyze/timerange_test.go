@@ -63,6 +63,22 @@ func TestMonthBounds(t *testing.T) {
 	}
 }
 
+func TestWeekBounds(t *testing.T) {
+	t.Parallel()
+	loc := time.FixedZone("demo", -5*3600)
+	// Sunday 2026-03-29 12:00 → week started Monday 2026-03-23
+	now := time.Date(2026, 3, 29, 12, 0, 0, 0, loc)
+	start, end := WeekBounds(now)
+	wantStart := time.Date(2026, 3, 23, 0, 0, 0, 0, loc)
+	wantEnd := time.Date(2026, 3, 30, 0, 0, 0, 0, loc)
+	if !start.Equal(wantStart) {
+		t.Fatalf("start %v want %v", start, wantStart)
+	}
+	if !end.Equal(wantEnd) {
+		t.Fatalf("end %v want %v", end, wantEnd)
+	}
+}
+
 func TestFilterReportByWindow(t *testing.T) {
 	t.Parallel()
 	start := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
