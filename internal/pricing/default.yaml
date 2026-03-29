@@ -1,0 +1,54 @@
+# Estimated API list prices (USD per 1M tokens). Update from vendor docs; not an invoice.
+version: 1
+disclaimer: "Estimates from published API rates; subscription and team billing may differ."
+
+anthropic:
+  models:
+    claude-sonnet-4-5-20250929:
+      input_per_mtok_usd: 3
+      output_per_mtok_usd: 15
+      cache_read_input_per_mtok_usd: 0.30
+      cache_creation_input_per_mtok_usd: 3.75
+    # Short id seen in some Claude Code logs (same list tier as Sonnet 4.5 until you refresh from pricing docs)
+    claude-sonnet-4-6:
+      input_per_mtok_usd: 3
+      output_per_mtok_usd: 15
+      cache_read_input_per_mtok_usd: 0.30
+      cache_creation_input_per_mtok_usd: 3.75
+    claude-sonnet-4-20250514:
+      input_per_mtok_usd: 3
+      output_per_mtok_usd: 15
+      cache_read_input_per_mtok_usd: 0.30
+      cache_creation_input_per_mtok_usd: 3.75
+    claude-opus-4-20250514:
+      input_per_mtok_usd: 15
+      output_per_mtok_usd: 75
+      cache_read_input_per_mtok_usd: 1.50
+      cache_creation_input_per_mtok_usd: 18.75
+    claude-haiku-4-20251001:
+      input_per_mtok_usd: 1
+      output_per_mtok_usd: 5
+      cache_read_input_per_mtok_usd: 0.10
+      cache_creation_input_per_mtok_usd: 1.25
+
+openai:
+  models:
+    gpt-4o:
+      input_per_mtok_usd: 2.50
+      output_per_mtok_usd: 10
+      cache_read_input_per_mtok_usd: 1.25
+      cache_creation_input_per_mtok_usd: 2.50
+    gpt-4o-mini:
+      input_per_mtok_usd: 0.15
+      output_per_mtok_usd: 0.60
+      cache_read_input_per_mtok_usd: 0.075
+      cache_creation_input_per_mtok_usd: 0.15
+    o4-mini:
+      input_per_mtok_usd: 1.10
+      output_per_mtok_usd: 4.40
+      cache_read_input_per_mtok_usd: 0.55
+      cache_creation_input_per_mtok_usd: 1.10
+
+# Cursor: when model string matches an OpenAI id, pricing uses openai.models; add aliases here.
+cursor:
+  model_aliases: {}

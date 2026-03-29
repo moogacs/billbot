@@ -1,0 +1,2 @@
+{"role":"user","timestamp":"2025-01-01T00:00:00Z","content":"cursor hi"}
+{"role":"assistant","timestamp":"2025-01-01T00:01:00Z","model":"gpt-4o-mini","id":"c1","usage":{"prompt_tokens":1000000,"completion_tokens":500000}}

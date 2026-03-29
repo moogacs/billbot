@@ -1,0 +1,33 @@
+# From repo root (PATH must include vhs, ffmpeg, ttyd):
+#   vhs demo/demo.tape
+Output assets/demo.gif
+
+Require go
+
+Set Shell zsh
+Set FontSize 15
+Set Width 1120
+Set Height 640
+Set Padding 36
+Set Theme "Aardvark Blue"
+Set TypingSpeed 75ms
+Set PlaybackSpeed 1.15
+Set CursorBlink false
+
+Hide
+Type "go build -o billbot ./cmd/billbot"  Sleep 200ms  Enter
+Sleep 5s
+Type "clear"  Sleep 200ms  Enter
+Sleep 300ms
+Show
+
+Type "./billbot --help"  Sleep 300ms  Enter
+Sleep 4s
+
+Type "clear"  Sleep 200ms  Enter
+Sleep 400ms
+
+Type "./billbot analyze testdata/anthropic/min.jsonl --color always --show-prompts --prompt-width 48"  Sleep 300ms  Enter
+Sleep 6s
+
+Sleep 2s
