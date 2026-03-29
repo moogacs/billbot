@@ -9,7 +9,12 @@ Set FontSize 15
 Set Width 1120
 Set Height 640
 Set Padding 36
-Set Theme "Aardvark Blue"
+Set Margin 28
+Set MarginFill "#000000"
+Set BorderRadius 10
+Set WindowBar Colorful
+# Same palette as "Aardvark Blue" but terminal background is black; outer canvas via MarginFill.
+Set Theme {"name":"Aardvark Blue","black":"#191919","red":"#aa342e","green":"#4b8c0f","yellow":"#dbba00","blue":"#1370d3","magenta":"#c43ac3","cyan":"#008eb0","white":"#bebebe","brightBlack":"#454545","brightRed":"#f05b50","brightGreen":"#95dc55","brightYellow":"#ffe763","brightBlue":"#60a4ec","brightMagenta":"#e26be2","brightCyan":"#60b6cb","brightWhite":"#f7f7f7","background":"#000000","foreground":"#dddddd","cursor":"#007acc","selection":"#bfdbfe"}
 Set TypingSpeed 75ms
 Set PlaybackSpeed 1.15
 Set CursorBlink false
