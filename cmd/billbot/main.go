@@ -20,6 +20,28 @@ import (
 	"golang.org/x/term"
 )
 
+// Set by GoReleaser via -ldflags (-X main.*).
+var (
+	version = "dev"
+	commit  = ""
+	date    = ""
+)
+
+func buildVersion() string {
+	if commit == "" {
+		return version
+	}
+	short := commit
+	if len(short) > 7 {
+		short = short[:7]
+	}
+	s := version + " (commit " + short + ")"
+	if date != "" {
+		s += ", built " + date
+	}
+	return s
+}
+
 func main() {
 	if err := rootCmd().Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -119,6 +141,7 @@ The week is the local calendar week Monday 00:00 → next Monday 00:00. Pace is 
 	forecastCmd.Flags().Int64Var(&flagWeeklyLimitTokens, "weekly-limit-tokens", 0, "weekly token cap (sum of input+output+cache fields)")
 
 	root.AddCommand(analyzeCmd, projectCmd, forecastCmd)
+	root.Version = buildVersion()
 	return root
 }
 
