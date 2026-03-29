@@ -1,6 +1,6 @@
-**Billbot** is a small command-line tool that reads **Claude Code**, **OpenAI Codex**, and **Cursor** session files from your computer and prints **rough dollar estimates** for API-style token usage. Nothing is uploaded: it only opens local JSONL logs and Cursor’s SQLite stores, multiplies tokens by rates in a YAML file (built-in or yours), and shows tables or JSON.
+**Billbot** is cost calculator for **Claude Code**, **OpenAI Codex**, and **Cursor**. a small command-line tool that reads session files from your computer and prints **rough dollar estimates** for API-style token usage. Nothing is uploaded: it only opens local JSONL logs and Cursor’s SQLite stores, multiplies tokens by rates in a YAML file (built-in or yours), and shows tables or JSON.
 
-Use it when you want a quick sense of spend after a long agent session, or a roll-up across everything the tool can find on disk—not when you need an exact invoice.
+Use it when you want a quick sense of spend after a long agent session, or a roll-up across everything the tool can find on disk not when you need an exact invoice.
 
 > Totals are **estimates** from public list-style rates. Real bills depend on plans, seats, discounts, and how the vendor rounds.
 
