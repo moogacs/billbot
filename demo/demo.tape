@@ -32,7 +32,7 @@ Sleep 4s
 Type "clear"  Sleep 200ms  Enter
 Sleep 400ms
 
-Type "./billbot analyze testdata/anthropic/min.jsonl --color always --show-prompts --prompt-width 48"  Sleep 300ms  Enter
-Sleep 6s
+Type "./billbot --provider cc testdata/anthropic/min.jsonl"  Sleep 300ms  Enter
+Sleep 5s
 
 Sleep 2s

@@ -31,6 +31,7 @@ Or clone and build:
 ```bash
 go build -o billbot ./cmd/billbot
 ./billbot --help
+./billbot --provider cc
 ```
 
 ## How to run it
