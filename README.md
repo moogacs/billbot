@@ -21,6 +21,15 @@ Use it when you want a quick sense of spend after a long agent session, or a rol
 
 ## Setup
 
+**Install via Homebrew** (after you create a tap repo `moogacs/homebrew-billbot`):
+
+```bash
+brew tap moogacs/billbot
+brew install billbot
+```
+
+**Install via Go**
+
 You need [Go](https://go.dev/) **1.23** (see `go.mod`).
 
 ```bash

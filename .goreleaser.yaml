@@ -39,3 +39,21 @@ archives:
 
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+
+brews:
+  - name: billbot
+    tap:
+      owner: moogacs
+      name: homebrew-billbot
+    folder: Formula
+    commit_author:
+      name: goreleaserbot
+      email: goreleaser@github.com
+    homepage: https://github.com/moogacs/billbot
+    description: "Privacy-first CLI: read Claude Code, Codex, and Cursor logs on disk; apply YAML rates; print estimated USD."
+    license: Apache-2.0
+    install: |
+      bin.install "billbot"
+    test: |
+      system "#{bin}/billbot", "--version"
+    token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
