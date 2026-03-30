@@ -26,13 +26,28 @@ Type "clear"  Sleep 200ms  Enter
 Sleep 300ms
 Show
 
-Type "./billbot --help"  Sleep 300ms  Enter
+Type "brew tap moogacs/billbot"  Sleep 300ms  Enter
+Sleep 3s
+
+Type "brew install billbot"  Sleep 300ms  Enter
+Sleep 5s
+
+Type "clear"  Sleep 200ms  Enter
+Sleep 400ms
+
+Type "billbot --version"  Sleep 300ms  Enter
+Sleep 2s
+
+Type "clear"  Sleep 200ms  Enter
+Sleep 400ms
+
+Type "billbot --help"  Sleep 300ms  Enter
 Sleep 4s
 
 Type "clear"  Sleep 200ms  Enter
 Sleep 400ms
 
-Type "./billbot --provider cc testdata/anthropic/min.jsonl"  Sleep 300ms  Enter
+Type "billbot --provider cc testdata/anthropic/min.jsonl"  Sleep 300ms  Enter
 Sleep 5s
 
 Sleep 2s
