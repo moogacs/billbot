@@ -42,3 +42,8 @@ Type "clear" Sleep 150ms Enter
 Sleep 400ms
 Type "billy forecast --provider anthropic --weekly-limit-usd 20 testdata/anthropic/min.jsonl" Sleep 200ms Enter
 Sleep 4s
+
+Type "clear" Sleep 150ms Enter
+Sleep 400ms
+Type "billy heatmap --metric cost" Sleep 200ms Enter
+Sleep 5s
